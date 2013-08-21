@@ -47,15 +47,16 @@ except:
 
 # bandpass output
 output = filter(lambda x: x.name == 'VU1o', r['symbolic'][0].keys())[0]
-syms = filter(lambda x: x.is_Symbol, r['symbolic'][0][output].atoms())
+tf = r['symbolic'][0][output]
+syms = filter(lambda x: x.is_Symbol, tf.atoms())
 locals().update(
 	dict(zip(map(str, syms), syms))
 )
 
-print "The band-pass output has expression: \n%s = %s"%(output.name, str(r['symbolic'][0][output]))
+print "The band-pass output has expression: \n%s = %s"%(output.name, str(tf))
 # get all the other symbols we need
 w = sympy.Symbol('w', real=True)
-tf = sympy.limit(r['symbolic'][0][output], E1, sympy.oo, '+')
+tf = sympy.limit(tf, E1, sympy.oo, '+')
 
 v1v, R1v, C1v = (1, 10e3, 15e-9)
 print "We set: v1=%d (AC), R1=%g ohm, C1=%g F." % (v1v, R1v, C1v)
@@ -96,21 +97,17 @@ x = list(2*np.random.random(sRate)-1.0)
 # allocate output vector for y[n-2] indexing to work
 y = [0.0]*len(x)
 
+# Direct Form I
 for n in range(len(x)):
 	y[n] = b[0]*x[n] + b[1]*x[n-1] + b[2]*x[n-2] - a[1]*y[n-1] - a[2]*y[n-2]
 
-y = np.array(y)
-x = np.array(x)
-
 # frequencies to radians
 freqs = (np.fft.fftfreq(len(y), T))[0:len(y)/2] * (2*np.pi)
-mags = 	(np.abs(np.fft.fft(y)))[0:len(y)/2]
+mags = 	(np.abs(np.fft.fft(np.array(y))))[0:len(y)/2]
 
 # normalize magnitude to 1.0
 mags = mags/max(mags)
-pylab.semilogx(
-	freqs, mags, '.', label='DFT of IIR filtered white noise'
-)
+pylab.semilogx(freqs, mags, '.', label='DFT of IIR filtered white noise')
 pylab.xlabel('freq (w/s)')
 pylab.ylabel('normalized amplitude')
 pylab.legend()
