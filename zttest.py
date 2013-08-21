@@ -46,28 +46,26 @@ except:
 	pickle.dump(r, open("results-ttb.pk", "wb"))
 
 # bandpass output
-VU1o = filter(lambda x: x.name == 'VU1o', r['symbolic'][0].keys())[0]
-VU3o = filter(lambda x: x.name == 'VU3o', r['symbolic'][0].keys())[0]
-s = filter(lambda x: str(x) == 's', r['symbolic'][0][VU1o].atoms())[0]
-E1 = filter(lambda x: str(x) == 'E1', r['symbolic'][0][VU1o].atoms())[0]
-C1 = filter(lambda x: str(x) == 'C1', r['symbolic'][0][VU1o].atoms())[0]
-R1 = filter(lambda x: str(x) == 'R1', r['symbolic'][0][VU1o].atoms())[0]
-v1 = filter(lambda x: str(x) == 'V1', r['symbolic'][0][VU1o].atoms())[0]
+output = filter(lambda x: x.name == 'VU1o', r['symbolic'][0].keys())[0]
+syms = filter(lambda x: x.is_Symbol, r['symbolic'][0][output].atoms())
+locals().update(
+	dict(zip(map(str, syms), syms))
+)
 
-print "The band-pass output has expression: \n%s = %s"%(VU3o.name, str(r['symbolic'][0][VU3o]))
+print "The band-pass output has expression: \n%s = %s"%(output.name, str(r['symbolic'][0][output]))
 # get all the other symbols we need
 w = sympy.Symbol('w', real=True)
-idout = sympy.limit(r['symbolic'][0][VU1o], E1, sympy.oo, '+')
+tf = sympy.limit(r['symbolic'][0][output], E1, sympy.oo, '+')
 
 v1v, R1v, C1v = (1, 10e3, 15e-9)
 print "We set: v1=%d (AC), R1=%g ohm, C1=%g F." % (v1v, R1v, C1v)
-nidout = idout.subs({R1:R1v, C1:C1v, v1:v1v})
-print nidout
+tf = tf.subs({R1:R1v, C1:C1v, V1:v1v})
+print tf
 
 sRate = 44.1e3
 T = 1/sRate
 
-fs = lambda x: sympy.N(abs(nidout.subs({s:sympy.I*x})))
+fs = lambda x: sympy.N(abs(tf.subs({s:sympy.I*x})))
 ws = np.logspace(1, np.log10(sRate), 5e2)
 mags = map(fs,ws)
 
@@ -79,19 +77,19 @@ def tustin(expression):
 	w0 = 2*np.pi*centroid/(sRate*2*np.pi)
 	# tustin's method
 	bt = 2/T * ((1-invz)/(1+invz))
-	dt = sympy.simplify(nidout.subs({s: bt}))
+	dt = sympy.simplify(tf.subs({s: bt}))
 	b = sympy.Poly(sympy.numer(dt)).all_coeffs()[::-1]
 	a = sympy.Poly(sympy.denom(dt)).all_coeffs()[::-1]
 	normalize = lambda x: float(x/a[0])
 	return (map(normalize, b), map(normalize, a))
 
-(b, a) = tustin(nidout)
+(b, a) = tustin(tf)
 print b,a
 
 pylab.semilogx(ws, map(fs, ws), 'v', label="from transfer function")
-aclabel = "|" + VU1o.name + "|"
+aclabel = "|" + output.name + "|"
 pylab.semilogx(r['ac']['w'].T[::10], r['ac'][aclabel].T[::10], '-', label='from simulation')
-pylab.vlines(np.abs(sympy.roots(sympy.denom(nidout), s, multiple=True)), 0, 1, 'r')
+pylab.vlines(np.abs(sympy.roots(sympy.denom(tf), s, multiple=True)), 0, 1, 'r')
 
 # build white noise input vector, normalized to \pm 1.0
 x = list(2*np.random.random(sRate)-1.0)
