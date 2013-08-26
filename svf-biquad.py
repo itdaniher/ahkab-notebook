@@ -2,7 +2,7 @@ from ahkab import *
 import pickle
 import sympy
 
-mycircuit = circuit.circuit(title="state variable filter", filename=None)
+mycircuit = circuit.circuit(title="state variable filter")
 
 gnd = mycircuit.get_ground_node()
 
@@ -43,15 +43,10 @@ except:
 	pickle.dump(r, open("results-svf.pk", "wb"))
 
 print r['symbolic'][0]
+VU1o = r['symbolic'][0].as_symbol('VU2o')
+E = r['symbolic'][0].as_symbol('E1')
+s = r['symbolic'][0].as_symbol('s')
 
-VU1o = filter(lambda x: x.name == 'VU1o', r['symbolic'][0].keys())[0]
-VU2o = filter(lambda x: x.name == 'VU2o', r['symbolic'][0].keys())[0]
-VU3o = filter(lambda x: x.name == 'VU3o', r['symbolic'][0].keys())[0]
-R = filter(lambda x: str(x) == 'R', r['symbolic'][0][VU3o].atoms())[0]
-C = filter(lambda x: str(x) == 'C1', r['symbolic'][0][VU3o].atoms())[0]
-E = filter(lambda x: str(x) == 'E1', r['symbolic'][0][VU3o].atoms())[0]
-s = filter(lambda x: str(x) == 's', r['symbolic'][0][VU3o].atoms())[0]
+out = sympy.limit(r['symbolic'][0][VU1o], E, sympy.oo, '+')
 
-out = sympy.limit(r['symbolic'][0][VU2o], E, sympy.oo, '+')
-
-print out
+print VU1o, "=", out.simplify()
