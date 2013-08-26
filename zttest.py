@@ -4,7 +4,7 @@ from ahkab import *
 import pickle
 import pylab
 
-mycircuit = circuit.circuit(title="Tow-Thomas biquad", filename=None)
+mycircuit = circuit.circuit(title="Tow-Thomas biquad")
 
 gnd = mycircuit.get_ground_node()
 
@@ -33,7 +33,7 @@ mycircuit.add_vsource(name="V1", ext_n1="in", ext_n2=gnd, vdc=5, vac=1)
 subs = symbolic.parse_substitutions(('R2=R1', 'R3=R1', 'C2=C1', 'E2=E1', 'E3=E1', "R3=R1", "R4=R1", "R5=R1", "R6=R1"))
 print subs
 
-symbolic_sim = {"type":"symbolic", "ac": True, "source":"V1", 'subs':subs}
+symbolic_sim = {"type":"symbolic", "ac": True, "source":None, 'subs':subs}
 
 ac_sim = {'type':'ac', 'start':0.1, 'stop':100e6, 'nsteps':1000}
 
@@ -46,7 +46,7 @@ except:
 	pickle.dump(r, open("results-ttb.pk", "wb"))
 
 # bandpass output
-output = filter(lambda x: x.name == 'VU1o', r['symbolic'][0].keys())[0]
+output = r['symbolic'][0].as_symbol('VU1o')
 tf = r['symbolic'][0][output]
 syms = filter(lambda x: x.is_Symbol, tf.atoms())
 locals().update(
@@ -89,7 +89,7 @@ print b,a
 
 pylab.semilogx(ws, map(fs, ws), 'v', label="from transfer function")
 aclabel = "|" + output.name + "|"
-pylab.semilogx(r['ac']['w'].T[::10], r['ac'][aclabel].T[::10], '-', label='from simulation')
+pylab.semilogx(r['ac']['w'].T[::10], r['ac'][aclabel].T[::10], '-', label='from AC simulation')
 pylab.vlines(np.abs(sympy.roots(sympy.denom(tf), s, multiple=True)), 0, 1, 'r')
 
 # build white noise input vector, normalized to \pm 1.0
