@@ -76,8 +76,8 @@ def tustin(expression):
 	invz = sympy.Symbol('invz', real=True)
 	# normalized center frequency derived from poles of filter SISO transfer function
 	w0 = 2*np.pi*centroid/(sRate*2*np.pi)
-	# tustin's method
-	bt = 2/T * ((1-invz)/(1+invz))
+	# modified bilinear transform w/ frequency warping
+	bt = w0/sympy.tan(w0*T/2) * ((1-invz)/(1+invz))
 	dt = sympy.simplify(tf.subs({s: bt}))
 	b = sympy.Poly(sympy.numer(dt)).all_coeffs()[::-1]
 	a = sympy.Poly(sympy.denom(dt)).all_coeffs()[::-1]
