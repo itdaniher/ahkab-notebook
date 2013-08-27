@@ -42,11 +42,12 @@ Vu1o, s, R1, R2, C1, C2, V1 = r['symbolic'][0].as_symbols("Vu1o s R1 R2 C1 C2 V1
 R1v, R2v, C1v, C2v, V1MAGv = 10e3, 10e3, 1e-9, 1e-9, 1.0
 w = sympy.Symbol('w', real=True)
 Vu1o = r['symbolic'][0]['Vu1o'].subs({V1:V1MAGv, R1:R1v, C1:C1v, C2:C2v, R2:R2v, s:w*sympy.I})
-Vu1o_f = lambda x: Vu1o.subs({w:x})
-Vu1o_symb_mag = numpy.array(map(sympy.N, map(sympy.Abs, map(Vu1o_f, r['ac']['w'][::50].tolist()[0]))), dtype='float')
-Vu1o_symb_arg = numpy.array(map(sympy.N, map(sympy.arg, map(Vu1o_f, r['ac']['w'][::50].tolist()[0]))), dtype='float')
+Vu1o_f = sympy.lambdify(w, Vu1o, "numpy")
 
+out = map(Vu1o_f, r['ac']['w'][::50].tolist()[0])
 
+Vu1o_symb_mag = numpy.abs(out)
+Vu1o_symb_arg = numpy.angle(out, deg=True)
 import pylab
 import numpy as np
 
@@ -57,7 +58,7 @@ pylab.ylabel("|VOUT| (dB)")
 pylab.legend()
 pylab.subplot(212)
 pylab.semilogx(r['ac']['w'].T, (180.0/np.pi*r['ac']['arg(Vu1o)'].T), '-', label='From AC simulation')
-pylab.semilogx(r['ac']['w'][::50].T, 180.0/np.pi*Vu1o_symb_arg, 'v', label='From SYMB simulation')
+pylab.semilogx(r['ac']['w'][::50].T, Vu1o_symb_arg, 'v', label='From SYMB simulation')
 pylab.ylabel("arg(VOUT)/deg")
 pylab.xlabel("$\omega$ (rad/s)")
 pylab.legend()
