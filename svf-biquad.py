@@ -42,11 +42,8 @@ except:
 	r = ahkab.process_analysis(an_list=[symbolic, ac_sim], circ=mycircuit, outfile="./ahkab_data", verbose=2, cli_tran_method=None, guess=True, disable_step_control=False)
 	pickle.dump(r, open("results-svf.pk", "wb"))
 
-print r['symbolic'][0]
-VU1o = r['symbolic'][0].as_symbol('VU2o')
 E = r['symbolic'][0].as_symbol('E1')
-s = r['symbolic'][0].as_symbol('s')
 
-out = sympy.limit(r['symbolic'][0][VU1o], E, sympy.oo, '+')
+out = sympy.limit(r['symbolic'][0]['VU1o'], E, sympy.oo, '+')
 
 print VU1o, "=", out.simplify()

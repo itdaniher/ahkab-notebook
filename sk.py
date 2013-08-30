@@ -1,6 +1,8 @@
+import numpy as np
 from ahkab import *
 import sympy
 import pickle
+import ahkabHelpers
 
 mycircuit = circuit.circuit(title="sallen-key 2pole lpf", filename=None)
 
@@ -28,28 +30,21 @@ symbolic = {"type":"symbolic", "ac": True, "source":"V1"}
 
 ac_sim = {'type':'ac', 'start':10, 'stop':100e6, 'nsteps':1000}
 
-
 try:
 	r = pickle.load(open("results-sallenkey.pk"))
 except:
 	r = ahkab.process_analysis(an_list=[symbolic, ac_sim], circ=mycircuit, outfile="/tmp/ahkab_data", verbose=2, cli_tran_method=None, guess=True, disable_step_control=False)
 	pickle.dump(r, open("results-sallenkey.pk", "wb"))
 
-	print r['ac'].keys()
-
 # substitute the actual values to the symbols and plot
-Vu1o, s, R1, R2, C1, C2, V1 = r['symbolic'][0].as_symbols("Vu1o s R1 R2 C1 C2 V1")
-R1v, R2v, C1v, C2v, V1MAGv = 10e3, 10e3, 1e-9, 1e-9, 1.0
-w = sympy.Symbol('w', real=True)
-Vu1o = r['symbolic'][0]['Vu1o'].subs({V1:V1MAGv, R1:R1v, C1:C1v, C2:C2v, R2:R2v, s:w*sympy.I})
-Vu1o_f = sympy.lambdify(w, Vu1o, "numpy")
+tf = ahkabHelpers.reduceTF(r['symbolic'][0]['Vu1o'], mycircuit)
+evalTF = sympy.lambdify(ahkabHelpers.getMapping(tf)['s'], tf)
 
-out = map(Vu1o_f, r['ac']['w'][::50].tolist()[0])
+out = map(evalTF, 1j*numpy.array(r['ac']['w'][::50].tolist()[0]))
 
-Vu1o_symb_mag = numpy.abs(out)
-Vu1o_symb_arg = numpy.angle(out, deg=True)
+Vu1o_symb_mag = np.abs(out)
+Vu1o_symb_arg = np.angle(out, deg=True)
 import pylab
-import numpy as np
 
 pylab.subplot(211)
 pylab.semilogx(r['ac']['w'].T, 20*np.log10(r['ac']['|Vu1o|'].T), '-', label='From AC simulation')
