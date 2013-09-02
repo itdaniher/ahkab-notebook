@@ -1,0 +1,37 @@
+BUCK CONVERTER 
+* Borrowed from from http://www.ecircuitcenter.com/Circuits/smps_buck/smps_buck.htm
+* Circuit drawing with nodes: http://www.ecircuitcenter.com/Circuits/smps_buck/image002.gif
+* With added ESR to C1 (node 4)
+*
+* Simulation command with options:
+*./ahkab.py buck.ckt -v 6 -o buck.data --t-max-nr 1000 --t-fixed-step -t implicit_euler
+*
+* SWITCH DRIVER 
+VCTRL	10	0	TYPE=VDC VDC=0 TYPE=PULSE V1=0 V2=5 TD=0 TR=0.1U TF=0.1U PW=5U PER=20U
+*R10	10	0	1MEG
+*
+* INPUT VOLTAGE
+VIN	1	0	TYPE=VDC	VDC=5
+*
+* CONVERTER
+SW1	1 2	10 0 	SWM
+D1	0	2	DSCH
+L1	2	3	50U
+C1	3	4	25U 	IC=0
+RESR	4	0	.1
+*
+* LOAD
+RL	3	0	5
+*
+*
+.MODEL	SW SWM VON=5 VOFF=0 RON=0.01 ROFF=10MEG
+.MODEL D DSCH IS=0.0002 RS=0.05 CJ0=5e-10
+*
+* ANALYSIS
+.OP
+* RUN A TRAN, USING OP AND THE IC FROM C1 AS STARTING POINT
+.TRAN TSTEP=.1U TSTOP=400U UIC=2
+*
+* PLOT THE RESULTS
+.PLOT TRAN V(2) V(3) I(L1)
+.END
