@@ -2,7 +2,7 @@ import sympy
 import numpy as np
 
 def getMapping(tf):
-	syms = filter(lambda x: x.is_Symbol, tf.atoms())
+	syms = tf.atoms(sympy.Symbol)
 	return dict(zip(map(str, syms), syms))
 
 def reduceTF(tf, cir):
