@@ -29,12 +29,12 @@ buildsepic(mycircuit)
 
 printing.print_circuit(mycircuit)
 
-symbolic = {"type":"symbolic", "ac": True, "source":None}
+symbolic_sim = ahkab.new_symbolic()
 
 try:
 	r = pickle.load(open("results-sepic.pk"))
 except:
-	r = ahkab.process_analysis(an_list=[symbolic], circ=mycircuit, outfile="/tmp/ahkab_data", verbose=9, cli_tran_method=None, guess=True, disable_step_control=False)
+	r = ahkab.run(mycircuit, (symbolic_sim,))
 	pickle.dump(r, open("results-sepic.pk", "wb"))
 
 print mycircuit

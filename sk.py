@@ -26,15 +26,20 @@ buildsk(mycircuit)
 
 printing.print_circuit(mycircuit)
 
-symbolic = {"type":"symbolic", "ac": True, "source":"V1"}
+symbolic_sim = ahkab.new_symbolic(ac_enable=True, source='V1')
 
-ac_sim = {'type':'ac', 'start':10, 'stop':100e6, 'nsteps':1000}
+ac_sim = ahkab.new_ac(start=10, stop=100e6, points=1000, x0=None)
 
 try:
 	r = pickle.load(open("results-sallenkey.pk"))
 except:
-	r = ahkab.process_analysis(an_list=[symbolic, ac_sim], circ=mycircuit, outfile="/tmp/ahkab_data", verbose=2, cli_tran_method=None, guess=True, disable_step_control=False)
+	ahkab.queue(ac_sim, symbolic_sim)
+	r = ahkab.run(mycircuit)
 	pickle.dump(r, open("results-sallenkey.pk", "wb"))
+
+print r['symbolic'][0]
+print "Symbolic transfer functions:"
+printing.print_symbolic_transfer_functions(r['symbolic'][1])
 
 # substitute the actual values to the symbols and plot
 tf = ahkabHelpers.reduceTF(r['symbolic'][0]['Vu1o'], mycircuit)
@@ -57,5 +62,4 @@ pylab.semilogx(r['ac']['w'][::50].T, Vu1o_symb_arg, 'v', label='From SYMB simula
 pylab.ylabel("arg(VOUT)/deg")
 pylab.xlabel("$\omega$ (rad/s)")
 pylab.legend()
-print r['symbolic'][0]
 pylab.show()

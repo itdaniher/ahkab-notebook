@@ -33,13 +33,14 @@ mycircuit.add_vsource(name="V1", ext_n1="in", ext_n2=gnd, vdc=5, vac=1)
 
 subs = symbolic.parse_substitutions(('E2=E1', 'E3=E1'))
 
-symbolic = {"type":"symbolic", "ac": True, "source":"V1", "subs":subs}
-ac_sim = {'type':'ac', 'start':0.1, 'stop':100e6, 'nsteps':1000}
+symbolic_sim = ahkab.new_symbolic(ac_enable=True, source="V1", subs=subs)
+ac_sim = ahkab.new_ac(start=0.1, stop=100e6, points=1000, x0=None)
 
 try:
 	r = pickle.load(open("results-svf.pk"))
 except:
-	r = ahkab.process_analysis(an_list=[symbolic, ac_sim], circ=mycircuit, outfile="./ahkab_data", verbose=2, cli_tran_method=None, guess=True, disable_step_control=False)
+	ahkab.queue(symbolic_sim, ac_sim)
+	r = ahkab.run(mycircuit)
 	pickle.dump(r, open("results-svf.pk", "wb"))
 
 E = r['symbolic'][0].as_symbol('E1')
