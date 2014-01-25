@@ -6,12 +6,12 @@ def getMapping(tf):
 	return dict(zip(map(str, syms), syms))
 
 def reduceTF(tf, cir):
-	for e in cir.elements:
+	for e in cir:
 		if not e.is_nonlinear:
-			name = (e.letter_id.upper() + e.descr)
+			name = e.part_id
 			obs = getMapping(tf)
 			if name in map(str, tf.atoms()):
-				tf = tf.subs(obs[name], float(e.v))
+				tf = tf.subs(obs[name], float(e.value))
 	return tf
 
 def tustin(tf, sRate):
