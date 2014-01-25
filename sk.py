@@ -4,7 +4,7 @@ import sympy
 import pickle
 import ahkabHelpers
 
-mycircuit = circuit.circuit(title="sallen-key 2pole lpf", filename=None)
+mycircuit = circuit.Circuit(title="sallen-key 2pole lpf", filename=None)
 
 # https://upload.wikimedia.org/wikipedia/commons/5/5c/Sallen-Key_Lowpass_Example.svg
 
@@ -42,23 +42,25 @@ print "Symbolic transfer functions:"
 printing.print_symbolic_transfer_functions(r['symbolic'][1])
 
 # substitute the actual values to the symbols and plot
-tf = ahkabHelpers.reduceTF(r['symbolic'][0]['Vu1o'], mycircuit)
+V1 = r['symbolic'][0].as_symbol('V1')
+tf = r['symbolic'][0]['Vu1o']/V1
+tf = ahkabHelpers.reduceTF(tf, mycircuit)
 evalTF = sympy.lambdify(ahkabHelpers.getMapping(tf)['s'], tf)
 
-out = map(evalTF, 1j*numpy.array(r['ac']['w'][::50].tolist()[0]))
+out = map(evalTF, 1j*r['ac']['w'][::50])
 
 Vu1o_symb_mag = np.abs(out)
 Vu1o_symb_arg = np.angle(out, deg=True)
 import pylab
 
 pylab.subplot(211)
-pylab.semilogx(r['ac']['w'].T, 20*np.log10(r['ac']['|Vu1o|'].T), '-', label='From AC simulation')
-pylab.semilogx(r['ac']['w'][::50].T, 20*np.log10(Vu1o_symb_mag), 'v', label='From SYMB simulation')
+pylab.semilogx(r['ac']['w'], 20*np.log10(r['ac']['|Vu1o|']), '-', label='From AC simulation')
+pylab.semilogx(r['ac']['w'][::50], 20*np.log10(Vu1o_symb_mag), 'v', label='From SYMB simulation')
 pylab.ylabel("|VOUT| (dB)")
 pylab.legend()
 pylab.subplot(212)
-pylab.semilogx(r['ac']['w'].T, (180.0/np.pi*r['ac']['arg(Vu1o)'].T), '-', label='From AC simulation')
-pylab.semilogx(r['ac']['w'][::50].T, Vu1o_symb_arg, 'v', label='From SYMB simulation')
+pylab.semilogx(r['ac']['w'], (180.0/np.pi*r['ac']['arg(Vu1o)']), '-', label='From AC simulation')
+pylab.semilogx(r['ac']['w'][::50], Vu1o_symb_arg, 'v', label='From SYMB simulation')
 pylab.ylabel("arg(VOUT)/deg")
 pylab.xlabel("$\omega$ (rad/s)")
 pylab.legend()
