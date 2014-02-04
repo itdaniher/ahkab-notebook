@@ -7,7 +7,7 @@ import pylab
 
 import ahkabHelpers
 
-mycircuit = circuit.circuit(title="Tow-Thomas biquad")
+mycircuit = circuit.Circuit(title="Tow-Thomas biquad")
 
 gnd = mycircuit.get_ground_node()
 
@@ -28,26 +28,29 @@ def buildsvf(svf):
 	ao("E3", gnd, "U3n")
 
 buildsvf(mycircuit)
+mycircuit.add_vsource("V1", n1="in", n2=gnd, dc_value=5, ac_value=1)
 
 printing.print_circuit(mycircuit)
-
-mycircuit.add_vsource(name="V1", ext_n1="in", ext_n2=gnd, vdc=5, vac=1)
-
-subs = symbolic.parse_substitutions(('R2=R1', 'R3=R1', 'C2=C1', 'E2=E1', 'E3=E1', "R3=R1", "R4=R1", "R5=R1", "R6=R1"))
-
-symbolic_sim = ahkab.new_symbolic(ac_enable=True, source=None, subs=subs)
 
 ac_sim = new_ac(start=0.1, stop=100e6, points=1000, x0=None)
 
 try:
 	r = pickle.load(open("results-ttb.pk"))
 except:
-	ahkab.queue(ac_sim, symbolic_sim)
+	subs = symbolic.parse_substitutions(('R2=R1', 'R3=R1', 'C2=C1',
+                                             'E2=E1', 'E3=E1', "R4=R1", 
+                                             "R5=R1", "R6=R1"))
+	symbolic_sim = ahkab.new_symbolic(ac_enable=True, source=None,
+                                          subs=subs)
+	ahkab.queue(symbolic_sim)
 	r = ahkab.run(mycircuit)
 	pickle.dump(r, open("results-ttb.pk", "wb"))
 
+ahkab.queue(ac_sim)
+r.update(ahkab.run(mycircuit))
+
 # TU1o is bandpass output
-tf = r['symbolic'][0]['VU1o']
+tf = r['symbolic'][0]['VU1o']/r['symbolic'][0].as_symbol('V1')
 locals().update(ahkabHelpers.getMapping(tf))
 
 tf = sympy.limit(tf, E1, sympy.oo, '+')
@@ -60,11 +63,12 @@ fs = lambda x: sympy.N(abs(tf.subs({s:sympy.I*x})))
 ws = np.logspace(1, np.log10(sRate), 5e2)
 mags = map(fs,ws)
 
+print tf
 (b, a) = ahkabHelpers.tustin(tf, sRate)
 print b,a
 
 pylab.semilogx(ws, map(fs, ws), 'v', label="from transfer function")
-pylab.semilogx(r['ac']['w'].T[::10], r['ac']['|VU1o|'].T[::10], '-', label='from AC simulation')
+pylab.semilogx(r['ac']['w'][::10], r['ac']['|VU1o|'][::10], '-', label='from AC simulation')
 pylab.vlines(np.abs(sympy.roots(sympy.denom(tf), s, multiple=True)), 0, 1, 'r')
 
 # build white noise input vector, normalized to \pm 1.0
