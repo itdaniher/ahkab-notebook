@@ -1,9 +1,10 @@
 import numpy as np
-from ahkab import *
+import ahkab
+from ahkab import circuit
 import sympy
 import pickle
 import ahkabHelpers
-mycircuit = circuit.circuit(title="sepic", filename=None)
+mycircuit = circuit.Circuit(title="sepic", filename=None)
 
 # https://en.wikipedia.org/wiki/File:SEPIC_Schematic.gif
 
@@ -27,7 +28,7 @@ def buildsepic(circuit):
 
 buildsepic(mycircuit)
 
-printing.print_circuit(mycircuit)
+print(mycircuit)
 
 symbolic_sim = ahkab.new_symbolic()
 
@@ -40,10 +41,11 @@ except:
 print mycircuit
 print r['symbolic'][0]
 
-tf = r['symbolic'][0]['I[L1]']
+tf = r['symbolic'][0]['I[L1]']/r['symbolic'][0]['Vin']
 
 tf = ahkabHelpers.reduceTF(tf, mycircuit)
+
 import compensators
 print compensators.drawBode(tf)
-from pylab import show
-show()
+from pylab import savefig
+savefig('sepic.png')

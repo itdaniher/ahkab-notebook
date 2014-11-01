@@ -1,5 +1,6 @@
 import numpy as np
-from ahkab import *
+import ahkab
+from ahkab import circuit, printing
 import sympy
 import pickle
 import ahkabHelpers
@@ -24,7 +25,7 @@ def buildsk(svf):
 
 buildsk(mycircuit)
 
-printing.print_circuit(mycircuit)
+print(mycircuit)
 
 symbolic_sim = ahkab.new_symbolic(ac_enable=True, source='V1')
 
@@ -54,14 +55,14 @@ Vu1o_symb_arg = np.angle(out, deg=True)
 import pylab
 
 pylab.subplot(211)
-pylab.semilogx(r['ac']['w'], 20*np.log10(r['ac']['|Vu1o|']), '-', label='From AC simulation')
+pylab.semilogx(r['ac']['w'], np.abs(20*np.log10(r['ac']['Vu1o'])), '-', label='From AC simulation')
 pylab.semilogx(r['ac']['w'][::50], 20*np.log10(Vu1o_symb_mag), 'v', label='From SYMB simulation')
 pylab.ylabel("|VOUT| (dB)")
 pylab.legend()
 pylab.subplot(212)
-pylab.semilogx(r['ac']['w'], (180.0/np.pi*r['ac']['arg(Vu1o)']), '-', label='From AC simulation')
+pylab.semilogx(r['ac']['w'], (180.0/np.pi*np.angle(r['ac']['Vu1o'])), '-', label='From AC simulation')
 pylab.semilogx(r['ac']['w'][::50], Vu1o_symb_arg, 'v', label='From SYMB simulation')
 pylab.ylabel("arg(VOUT)/deg")
 pylab.xlabel("$\omega$ (rad/s)")
 pylab.legend()
-pylab.show()
+pylab.savefig('sk.png')

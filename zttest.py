@@ -1,10 +1,10 @@
 import numpy as np
 import sympy
-from ahkab import *
 import pickle
 import sympy
 import pylab
-
+import ahkab
+from ahkab import printing, circuit, symbolic, new_ac
 import ahkabHelpers
 
 mycircuit = circuit.Circuit(title="Tow-Thomas biquad")
@@ -30,7 +30,7 @@ def buildsvf(svf):
 buildsvf(mycircuit)
 mycircuit.add_vsource("V1", n1="in", n2=gnd, dc_value=5, ac_value=1)
 
-printing.print_circuit(mycircuit)
+print(mycircuit)
 
 ac_sim = new_ac(start=0.1, stop=100e6, points=1000, x0=None)
 
@@ -38,7 +38,7 @@ try:
 	r = pickle.load(open("results-ttb.pk"))
 except:
 	subs = symbolic.parse_substitutions(('R2=R1', 'R3=R1', 'C2=C1',
-                                             'E2=E1', 'E3=E1', "R4=R1", 
+                                             'E2=E1', 'E3=E1', "R4=R1",
                                              "R5=R1", "R6=R1"))
 	symbolic_sim = ahkab.new_symbolic(ac_enable=True, source=None,
                                           subs=subs)
@@ -68,7 +68,7 @@ print tf
 print b,a
 
 pylab.semilogx(ws, map(fs, ws), 'v', label="from transfer function")
-pylab.semilogx(r['ac']['w'][::10], r['ac']['|VU1o|'][::10], '-', label='from AC simulation')
+pylab.semilogx(r['ac']['w'][::10], np.abs(r['ac']['VU1o'][::10]), '-', label='from AC simulation')
 pylab.vlines(np.abs(sympy.roots(sympy.denom(tf), s, multiple=True)), 0, 1, 'r')
 
 # build white noise input vector, normalized to \pm 1.0
@@ -90,4 +90,4 @@ pylab.semilogx(freqs, mags, '.', label='DFT of IIR filtered white noise')
 pylab.xlabel('freq (w/s)')
 pylab.ylabel('normalized amplitude')
 pylab.legend()
-pylab.show()
+pylab.savefig('zttest.png')
